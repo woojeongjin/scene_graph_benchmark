@@ -1,11 +1,11 @@
 import numpy as np
 import spacy
-import nltk
-from tqdm import tqdm
+# import nltk
+# from tqdm import tqdm
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
-import re
-import pandas
+# import re
+# import pandas
 import gensim.downloader as api
 import inflect
 p = inflect.engine()
@@ -74,10 +74,10 @@ class heuristic:
 
         for tagid in objects:
             if with_tag:
-                tag = tagid
+                tag_origin = tagid
             else:
-                tag = self.objects_vocab[tagid]
-            tag = tag.split()[-1]
+                tag_origin = self.objects_vocab[tagid]
+            tag = tag_origin.split()[-1]
             # print(tag)
             lem_tag = self.wordnet_lemma.lemmatize(tag)
             
@@ -102,9 +102,9 @@ class heuristic:
 
                 # exact matching
                 if lem_tag_singular == lem_token_singular:
-                    if tag not in match_final_dict:
-                        match_final_dict[tag] = set()
-                    match_final_dict[tag].add(token)
+                    if tag_origin not in match_final_dict:
+                        match_final_dict[tag_origin] = set()
+                    match_final_dict[tag_origin].add(token)
                     result.append("exact matching")
 
                 # plurar - singular
@@ -112,24 +112,24 @@ class heuristic:
                 singular_token = p.singular_noun(lem_token_singular)
                 if singular_tag:
                     if singular_tag == lem_token_singular:
-                        if tag not in match_final_dict:
-                            match_final_dict[tag] = set()
-                        match_final_dict[tag].add(token)
+                        if tag_origin not in match_final_dict:
+                            match_final_dict[tag_origin] = set()
+                        match_final_dict[tag_origin].add(token)
                         result.append("plurar,singular")
                 if singular_token:
                     if singular_token == lem_tag_singular:
-                        if tag not in match_final_dict:
-                            match_final_dict[tag] = set()
-                        match_final_dict[tag].add(token)
+                        if tag_origin not in match_final_dict:
+                            match_final_dict[tag_origin] = set()
+                        match_final_dict[tag_origin].add(token)
                         result.append("plurar,singular")
 
                 # concept matching
                 if lem_token_singular in self.concept_dictionary:
                     for concept in self.concept_dictionary[lem_token_singular]:
                         if lem_tag == concept or lem_tag_singular == concept:
-                            if tag not in match_final_dict:
-                                match_final_dict[tag] = set()
-                            match_final_dict[tag].add(token)
+                            if tag_origin not in match_final_dict:
+                                match_final_dict[tag_origin] = set()
+                            match_final_dict[tag_origin].add(token)
                             result.append("concept")
                             # result.append(self.concept_dict_rel[lem_token_singular])
                             # if token.lower() == 'sleeping' and tag.lower() == 'person':
@@ -140,16 +140,16 @@ class heuristic:
                     continue
                 
                 if self.gensim.similarity(lem_tag_singular, lem_token_singular) > 0.65:
-                    if tag not in match_final_dict:
-                        match_final_dict[tag] = set()
-                    match_final_dict[tag].add(token)
+                    if tag_origin not in match_final_dict:
+                        match_final_dict[tag_origin] = set()
+                    match_final_dict[tag_origin].add(token)
                     result.append("word2vec")
 
                 # synonyms
                 if lem_token_singular in tag_synonyms:
-                    if tag not in match_final_dict:
-                        match_final_dict[tag] = set()
-                    match_final_dict[tag].add(token)
+                    if tag_origin not in match_final_dict:
+                        match_final_dict[tag_origin] = set()
+                    match_final_dict[tag_origin].add(token)
                     result.append("synonym")
 
                 # if tag.lower() == 'office' and token.lower() == 'computer':

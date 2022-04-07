@@ -5,9 +5,11 @@ import base64
 import numpy as np
 from tqdm import tqdm
 from heuristic import heuristic
-import pickle
+# import pickle
 
-ann_file = 'annotations/captions_val2014.json'
+split = 'train2014'
+
+ann_file = 'annotations/captions_'+split+'.json'
 database = json.load(open(ann_file, 'r'))
 
 # data_path = 'annotations/instances_val2017.json'
@@ -46,7 +48,7 @@ img_ins_lst = dict()
 #     print(caption_text, match_dict, tags_name)
 
 
-with open('val2014_objs.json', 'r') as f:
+with open(split+'_objs.json', 'r') as f:
     objs = json.load(f)
 
 for d in objs:
@@ -86,7 +88,7 @@ for caption in tqdm(captions):
         output[caption['image_id']] = [result]
 # print(output)
 
-with open('val2014_align.json', 'w') as f:
+with open(split+'_align.json', 'w') as f:
     json.dump(output, f)
 
 # print(np.mean(num_words), np.mean(num_tags), np.mean(num_align))
