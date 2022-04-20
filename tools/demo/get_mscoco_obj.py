@@ -129,6 +129,8 @@ def main():
     for img_file in tqdm(img_list):
         cv2_img = cv2.imread(str(img_file))
         dets = detect_objects_on_single_image(model, transforms, cv2_img)
+        W_ori, H_ori = cv2_img.size
+        print(W_ori, H_ori)
 
         if isinstance(model, SceneParser):
             rel_dets = dets['relations']
@@ -194,7 +196,7 @@ def main():
 
         results.append({'image': str(img_file).split('/')[-1], 'bbox':rects, 'category': labels})
 
-    with open(args.split+'.json', 'w') as f:
+    with open(args.split+'_objs.json', 'w') as f:
         json.dump(results, f)
 
 

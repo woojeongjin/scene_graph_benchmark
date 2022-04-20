@@ -19,6 +19,7 @@ def detect_objects_on_single_image(model, transforms, cv2_img):
     # width information to scale the output boxes.
     img_input = cv2Img_to_Image(cv2_img)
     img_input, _ = transforms(img_input, target=None)
+    print(img_input.shape)
     img_input = img_input.to(model.device)
 
     with torch.no_grad():

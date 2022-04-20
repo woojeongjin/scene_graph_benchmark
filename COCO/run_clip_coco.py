@@ -4,9 +4,9 @@ from PIL import Image
 import json
 from tqdm import tqdm
 
-split = 'val2014'
+split = 'train2014'
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = clip.load("ViT-B/16", device=device)
+model, preprocess = clip.load("ViT-L/14", device=device)
 
 with open(split+'_objs.json', 'r') as f:
     objs = json.load(f)
@@ -28,9 +28,9 @@ def reverse_dict(match_dict):
         for tok in toks:
             if tok in token_dict.keys():
                 if tag not in token_dict[tok]:
-                    token_dict[tok].append(tag)
+                    token_dict[tok.lower()].append(tag.lower())
             else:
-                token_dict[tok] = [tag]
+                token_dict[tok.lower()] = [tag.lower()]
 
     return token_dict
         
@@ -60,6 +60,7 @@ for img_id in tqdm(aligns):
             tok = tok.lower().strip('.,?;:')
             sent_tokens.append(tok)
 
+        # print(sent_tokens)
         for tok, tags in token_dict.items():
             tag_bbox = []
             cropped_imgs = []
@@ -71,28 +72,47 @@ for img_id in tqdm(aligns):
             
             
             if len(cropped_imgs) == 1:
-                token_bbox[tok] = tag_bbox[0]
+                if tok not in sent_tokens:
+                    if tok+"'s" in sent_tokens:
+                        token_bbox[tok+"'s"] = tag_bbox[0]
+                    
+                    else:
+                        print('here', tok, sent_tokens)
+                        continue
+                else:
+                    token_bbox[tok] = tag_bbox[0]
             else:
                 sz = 2
-                index = sent_tokens.index(tok)
+                if tok not in sent_tokens:
+                    if tok+"'s" in sent_tokens:
+                        index = sent_tokens.index(tok+"'s")
+                        token_bbox[tok+"'s"] = tag_bbox[0]
+                    else:
+                        print('here2', tok, sent_tokens)
+                        continue
+                else:
+                    index = sent_tokens.index(tok)
                 surrounding = [" ".join(sent_tokens[index-sz: index+sz+1])]
 
                 images = []
                 for cropped_img in cropped_imgs:
                     images.append(preprocess(cropped_img).unsqueeze(0).to(device))
                 text = clip.tokenize(surrounding).to(device)
-                print(len(images), len(cropped_imgs), len(tag_bbox), tags, category)
+                # print(len(images), len(cropped_imgs), len(tag_bbox), tags, category)
                 image = torch.cat(images)
 
                 with torch.no_grad():
                     
                     logits_per_image, logits_per_text = model(image, text)
+                    # print(logits_per_text)
+                    # print(logits_per_text.reshape(-1).softmax(dim=-1))
                     img_ind = torch.argmax(logits_per_text.reshape(-1))
                     # print(logits_per_text, img_ind)
-                    token_bbox[tok] = tag_bbox[img_ind.item()]
+                    token_bbox[sent_tokens[index]] = tag_bbox[img_ind.item()]
 
                     # print(token_bbox)
         output[filename].append({'caption': caption, 'token_bbox': token_bbox})
+        
 
 
         # for tag, tokens in match_dict.items():
